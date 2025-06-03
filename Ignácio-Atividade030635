@@ -1,0 +1,64 @@
+# 1. Carregar pacotes
+library(tidyverse)  # inclui dplyr, tidyr e ggplot2
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# 2. Preparar os dados
+#    - converter as linhas em coluna 'model'
+#    - transformar 'cyl' em fator, para facilitar agrupamentos
+mtcars2 <- mtcars %>%
+  rownames_to_column(var = "model") %>%
+  mutate(cyl = factor(cyl))
+
+# 3. Usar tidyr::pivot_longer para “empilhar” três variáveis numéricas 
+#    (mpg, hp e wt) em duas colunas: 'variable' e 'value'
+mtcars_long <- mtcars2 %>%
+  pivot_longer(
+    cols      = c(mpg, hp, wt),
+    names_to  = "variable",
+    values_to = "value"
+  )
+
+# 4. Filtrar apenas as variáveis de interesse (mpg e hp) e eliminar wt, se quiser
+mtcars_filtrado <- mtcars_long %>%
+  filter(variable %in% c("mpg", "hp"))
+
+# 5. Agrupar por número de cilindros e por cada variável (mpg / hp)
+#    e calcular a média de 'value'
+resumo <- mtcars_filtrado %>%
+  group_by(cyl, variable) %>%
+  summarise(
+    avg_value = mean(value),
+    .groups   = "drop"
+  )
+
+# 6. Reestruturar com pivot_wider para que cada linha seja um 'cyl' e as colunas sejam 'mpg' e 'hp' médias
+resumo_wide <- resumo %>%
+  pivot_wider(
+    names_from  = variable,
+    values_from = avg_value
+  )
+#    Agora resumo_wide tem três colunas: cyl, mpg (média) e hp (média)
+
+# 7. Visualizar: plotar HP médio × MPG médio, com rótulo do número de cilindros
+ggplot(resumo_wide, aes(x = hp, y = mpg, label = cyl)) +
+  geom_point(size = 3) +
+  geom_text(vjust = -0.5) +
+  labs(
+    title = "Média de HP vs MPG por Número de Cilindros",
+    x     = "HP Médio",
+    y     = "MPG Médio"
+  ) +
+  theme_minimal()
+
+# 8. Outra visualização: densidade das três variáveis (mpg, hp, wt) separadas por cilindros
+ggplot(mtcars_long, aes(x = value, fill = cyl)) +
+  geom_density(alpha = 0.4) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(
+    title = "Distribuição de mpg, hp e wt por Número de Cilindros",
+    x     = "Valor",
+    y     = "Densidade"
+  ) +
+  theme_light()
