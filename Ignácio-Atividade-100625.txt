@@ -1,0 +1,30 @@
+# Robson, no dia 10 eu não vim, to fazendo hoje dia 17
+
+install.packages("tidyverse")
+
+library(tidyverse)
+
+df <-  read.csv("PS4_GamesSales.csv")
+
+df
+
+df_filtrado <- df %>%
+  filter(Genre %in% c("Action", "Sports"))
+
+df_filtrado2 <- df_filtrado %>%
+  filter(!is.na(Year), !is.na(Global))
+
+vendas_ano <- df_filtrado2 %>%
+  group_by(Year, Genre) %>%
+  summarise(vendasGlobal = sum(Global), .groups = "drop")
+
+ggplot(vendas_ano, aes(x = Year, y = vendasGlobal, color = Genre)) +
+  geom_point(size = 2) +
+  labs(
+    title = "Evolução das Vendas Globais de Jogos PS4",
+    subtitle = "Comparação entre os gêneros Action e Sports",
+    x = "Ano de Lançamento",
+    y = "Vendas Globais (em milhões)",
+    color = "Gênero"
+  ) +
+  theme_minimal()
